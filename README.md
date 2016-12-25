@@ -1,6 +1,7 @@
 # seahash
 
 [![Build Status](https://travis-ci.org/blainsmith/seahash.svg?branch=master)](https://travis-ci.org/blainsmith/seahash)
+[![Coverage Status](https://coveralls.io/repos/github/blainsmith/seahash/badge.svg?branch=master)](https://coveralls.io/github/blainsmith/seahash?branch=master)
 [![GoDoc](https://godoc.org/github.com/blainsmith/seahash?status.svg)](https://godoc.org/github.com/blainsmith/seahash)
 ![](https://img.shields.io/badge/license-MIT-blue.svg)
 
