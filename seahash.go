@@ -9,22 +9,46 @@ func Hash(b []uint8) uint64 {
 
 // HashSeeded will hash a byte array into a uint64 and allows you to supply your own uint64 seeds
 func HashSeeded(b []uint8, k1, k2, k3, k4 uint64) uint64 {
-	state := &State{k1, k2, k3, k4}
+	state := &state{k1, k2, k3, k4}
 	buffer := bytes.NewBuffer(b)
 
 	for {
 		if buf := buffer.Next(8); len(buf) > 0 {
-			state.Write(readInt(buf))
+			state.write(readInt(buf))
 		} else {
 			break
 		}
 	}
 
-	return state.Finish(len(b))
+	return state.finish(len(b))
+}
+
+// State is used to store the current state of the hashing as bytes are written to it
+type state struct {
+	A uint64
+	B uint64
+	C uint64
+	D uint64
+}
+
+// Write updates the State with a diffused value and shifts the 4 states around
+func (s *state) write(x uint64) {
+	a := s.A
+	a = diffuse(a ^ x)
+
+	s.A = s.B
+	s.B = s.C
+	s.C = s.D
+	s.D = a
+}
+
+// Finish performs a final diffuse before returning the final hash
+func (s *state) finish(size int) uint64 {
+	return diffuse(s.A ^ s.B ^ s.C ^ s.D ^ uint64(size))
 }
 
 // Diffuse helps shift bits around based on the input and isn't meant to be used by itself
-func Diffuse(x uint64) uint64 {
+func diffuse(x uint64) uint64 {
 	x *= 0x6eed0e9da4d94a4f
 	a := x >> 32
 	b := x >> 60
@@ -35,7 +59,7 @@ func Diffuse(x uint64) uint64 {
 }
 
 func readInt(b []uint8) uint64 {
-	var x uint64 = 0
+	var x uint64
 
 	for i := len(b) - 1; i >= 0; i-- {
 		x <<= 8
