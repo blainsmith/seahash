@@ -26,11 +26,11 @@ const (
 
 type digest struct {
 	state  state
-	buffer *bytes.Buffer
+	buffer bytes.Buffer
 }
 
-// New creates a new SeaHash hash.Hash
-func New() hash.Hash {
+// New creates a new SeaHash hash.Hash64
+func New() hash.Hash64 {
 	d := &digest{}
 	d.Reset()
 	return d
@@ -41,7 +41,7 @@ func (d *digest) Reset() {
 	d.state.b = seed2
 	d.state.c = seed3
 	d.state.d = seed4
-	d.buffer = bytes.NewBuffer(nil)
+	d.buffer.Reset()
 }
 
 // Size returns Size constant to satisfy hash.Hash interface
@@ -51,16 +51,17 @@ func (d *digest) Size() int { return Size }
 func (d *digest) BlockSize() int { return BlockSize }
 
 func (d *digest) Write(b []byte) (nn int, err error) {
-	d.buffer.Write(b)
-	return
+	return d.buffer.Write(b)
 }
 
 func (d *digest) Sum(b []byte) []byte {
 	d.Write(b)
-	return d.checkSum()
+	r := make([]byte, Size)
+	binary.LittleEndian.PutUint64(r, d.Sum64())
+	return r
 }
 
-func (d *digest) checkSum() []byte {
+func (d *digest) Sum64() uint64 {
 	bl := uint64(d.buffer.Len())
 	for {
 		if buf := d.buffer.Next(chunkSize); len(buf) > 0 {
@@ -69,18 +70,14 @@ func (d *digest) checkSum() []byte {
 			break
 		}
 	}
-
-	r := make([]byte, Size)
-	binary.LittleEndian.PutUint64(r, diffuse(d.state.a^d.state.b^d.state.c^d.state.d^bl))
-	return r
+	return diffuse(d.state.a^d.state.b^d.state.c^d.state.d^bl)
 }
 
 // Sum is a convenience method that returns the checksum of the byte slice
 func Sum(b []byte) []byte {
 	var d digest
 	d.Reset()
-	d.Write(b)
-	return d.checkSum()
+	return d.Sum(b)
 }
 
 type state struct {

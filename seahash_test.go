@@ -14,6 +14,15 @@ func ExampleSum() {
 	// Output: 75e54a6f823a991b
 }
 
+func ExampleSum64() {
+	// hash some bytes
+	h := seahash.New()
+	h.Write([]byte("to be or not to be"))
+	hash := h.Sum64()
+	fmt.Printf("%x", hash)
+	// Output: 1b993a826f4ae575
+}
+
 func TestHash(t *testing.T) {
 	h := seahash.New()
 	h.Write([]byte("to be or "))
@@ -26,8 +35,21 @@ func TestHash(t *testing.T) {
 }
 
 func BenchmarkSum(b *testing.B) {
+	h := seahash.New()
+	data := []byte("to be or not to be")
 	for i := 0; i < b.N; i++ {
-		seahash.Sum([]byte("to be or not to be"))
+		h.Sum(data)
+		h.Reset()
+	}
+}
+
+func BenchmarkSum64(b *testing.B) {
+	h := seahash.New()
+	data := []byte("to be or not to be")
+	for i := 0; i < b.N; i++ {
+		h.Write(data)
+		h.Sum64()
+		h.Reset()
 	}
 }
 

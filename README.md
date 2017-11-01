@@ -8,8 +8,11 @@
 A Go port of the [SeaHash](https://ticki.github.io/blog/seahash-explained/) algorithm.
 
 ## Benchmarks
+
+On Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz, with go 1.9.1.
+
 ```
 $ go test -bench . -benchmem
-BenchmarkHash-4      	30000000	        41.0 ns/op	       0 B/op	       0 allocs/op
-BenchmarkDiffuse-4   	2000000000	         0.29 ns/op	       0 B/op	       0 allocs/op
+BenchmarkSum-4     	20000000	        63.5 ns/op
+BenchmarkSum64-4   	30000000	        43.1 ns/op
 ```
