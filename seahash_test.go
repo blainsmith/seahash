@@ -14,12 +14,18 @@ func ExampleSum() {
 	// Output: 75e54a6f823a991b
 }
 
-func ExampleSum64() {
+func ExampleNew() {
 	// hash some bytes
 	h := New()
 	h.Write([]byte("to be or not to be"))
 	hash := h.Sum64()
 	fmt.Printf("%x", hash)
+	// Output: 1b993a826f4ae575
+}
+
+func ExampleSum64() {
+	// hash some bytes
+	fmt.Printf("%x", Sum64([]byte("to be or not to be")))
 	// Output: 1b993a826f4ae575
 }
 
