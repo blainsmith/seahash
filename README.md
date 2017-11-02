@@ -9,10 +9,10 @@ A Go port of the [SeaHash](https://ticki.github.io/blog/seahash-explained/) algo
 
 ## Benchmarks
 
-On Intel(R) Core(TM) i5-6500 CPU @ 3.20GHz, with go 1.9.1.
+Intel(R) Xeon(R) CPU E3-1505M v6 @ 3.00GHz
 
 ```
-$ go test -bench . -benchmem
-BenchmarkSum-4     	20000000	        63.5 ns/op
-BenchmarkSum64-4   	30000000	        43.1 ns/op
+$ go test -bench .
+BenchmarkSum-8     	30000000	        47.2 ns/op
+BenchmarkSum64-8   	50000000	        33.0 ns/op
 ```

@@ -5,7 +5,6 @@
 package seahash
 
 import (
-	"bytes"
 	"encoding/binary"
 	"hash"
 )
@@ -25,8 +24,14 @@ const (
 )
 
 type digest struct {
-	state  state
-	buffer bytes.Buffer
+	state state
+	// Cumulative # of bytes written.
+	inputSize int
+
+	// buf[:bufSize] keeps a subword-sized input that was left over from the
+	// previous call to Write.
+	bufSize int
+	buf     [chunkSize]byte
 }
 
 // New creates a new SeaHash hash.Hash64
@@ -41,7 +46,8 @@ func (d *digest) Reset() {
 	d.state.b = seed2
 	d.state.c = seed3
 	d.state.d = seed4
-	d.buffer.Reset()
+	d.inputSize = 0
+	d.bufSize = 0
 }
 
 // Size returns Size constant to satisfy hash.Hash interface
@@ -51,7 +57,28 @@ func (d *digest) Size() int { return Size }
 func (d *digest) BlockSize() int { return BlockSize }
 
 func (d *digest) Write(b []byte) (nn int, err error) {
-	return d.buffer.Write(b)
+	nn = len(b)
+	d.inputSize += len(b)
+	if d.bufSize > 0 {
+		n := len(d.buf) - d.bufSize
+		copy(d.buf[d.bufSize:], b)
+		if n > len(b) {
+			d.bufSize += len(b)
+			return
+		}
+		d.state.update(readInt(d.buf[:]))
+		d.bufSize = 0
+		b = b[n:]
+	}
+	for len(b) >= chunkSize {
+		d.state.update(readInt(b[:chunkSize]))
+		b = b[chunkSize:]
+	}
+	if len(b) > 0 {
+		d.bufSize = len(b)
+		copy(d.buf[:], b)
+	}
+	return
 }
 
 func (d *digest) Sum(b []byte) []byte {
@@ -62,15 +89,12 @@ func (d *digest) Sum(b []byte) []byte {
 }
 
 func (d *digest) Sum64() uint64 {
-	bl := uint64(d.buffer.Len())
-	for {
-		if buf := d.buffer.Next(chunkSize); len(buf) > 0 {
-			d.state.update(readInt(buf))
-		} else {
-			break
-		}
+	if d.bufSize > 0 {
+		s := d.state
+		s.update(readInt(d.buf[:d.bufSize]))
+		return diffuse(s.a ^ s.b ^ s.c ^ s.d ^ uint64(d.inputSize))
 	}
-	return diffuse(d.state.a^d.state.b^d.state.c^d.state.d^bl)
+	return diffuse(d.state.a ^ d.state.b ^ d.state.c ^ d.state.d ^ uint64(d.inputSize))
 }
 
 // Sum is a convenience method that returns the checksum of the byte slice
@@ -78,6 +102,14 @@ func Sum(b []byte) []byte {
 	var d digest
 	d.Reset()
 	return d.Sum(b)
+}
+
+// Sum64 is a convenience method that returns uint64 checksum of the byte slice
+func Sum64(b []byte) uint64 {
+	var d digest
+	d.Reset()
+	d.Write(b)
+	return d.Sum64()
 }
 
 type state struct {

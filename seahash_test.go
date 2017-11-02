@@ -1,41 +1,53 @@
-package seahash_test
+package seahash
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/blainsmith/seahash"
+	"math/rand"
 )
 
 func ExampleSum() {
 	// hash some bytes
-	hash := seahash.Sum([]byte("to be or not to be"))
+	hash := Sum([]byte("to be or not to be"))
 	fmt.Printf("%x", hash)
 	// Output: 75e54a6f823a991b
 }
 
 func ExampleSum64() {
 	// hash some bytes
-	h := seahash.New()
+	h := New()
 	h.Write([]byte("to be or not to be"))
 	hash := h.Sum64()
 	fmt.Printf("%x", hash)
 	// Output: 1b993a826f4ae575
 }
 
-func TestHash(t *testing.T) {
-	h := seahash.New()
-	h.Write([]byte("to be or "))
-	h.Write([]byte("not to be"))
-	s := fmt.Sprintf("%x", h.Sum(nil))
-
-	if s != "75e54a6f823a991b" {
-		t.Fail()
+func TestRandom(t *testing.T) {
+	expected := "d30e85ff891306b8"
+	str := []byte("abcdegfhijklmnabcdegfhijklmnabcdegfhijklmn")
+	for i := 0; i < 1000; i++ {
+		r := rand.NewSource(int64(i))
+		s := str
+		h := New()
+		// Split "str" into random fragments and add them to Write.  The
+		// final result should be the same.
+		for len(s) > 0 {
+			n := int(r.Int63()%int64(len(s))) + 1
+			h.Write(s[:n])
+			// Make a dummy call to Sum64() to detect when it causes
+			// an unwanted state change.
+			h.Sum64()
+			s = s[n:]
+		}
+		if s := fmt.Sprintf("%x", h.Sum(nil)); s != expected {
+			t.Errorf("seed %d: %v", i, s)
+		}
 	}
 }
 
 func BenchmarkSum(b *testing.B) {
-	h := seahash.New()
+	h := New()
 	data := []byte("to be or not to be")
 	for i := 0; i < b.N; i++ {
 		h.Sum(data)
@@ -44,17 +56,14 @@ func BenchmarkSum(b *testing.B) {
 }
 
 func BenchmarkSum64(b *testing.B) {
-	h := seahash.New()
 	data := []byte("to be or not to be")
 	for i := 0; i < b.N; i++ {
-		h.Write(data)
-		h.Sum64()
-		h.Reset()
+		Sum64(data)
 	}
 }
 
 func TestSizes(t *testing.T) {
-	h := seahash.New()
+	h := New()
 
 	if h.Size() != 8 {
 		t.Fail()
