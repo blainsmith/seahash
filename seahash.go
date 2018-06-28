@@ -2,7 +2,7 @@
 // created by http://ticki.github.io.
 //
 // See https://ticki.github.io/blog/seahash-explained.
-package seahash
+package seahash // import "blainsmith.com/go/seahash"
 
 import (
 	"encoding/binary"
