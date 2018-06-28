@@ -1,7 +1,3 @@
 language: go
 go: 1.10
 go_import_path: blainsmith.com/go/seahash
-before_install:
-  - go get github.com/mattn/goveralls
-script:
-  - $HOME/gopath/bin/goveralls -service=travis-ci
