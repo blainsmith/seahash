@@ -1,1 +1,1 @@
-module "github.com/blainsmith/seahash"
+module "blainsmith.com/go/seahash"
