@@ -1,1 +1,1 @@
-module "blainsmith.com/go/seahash"
+module blainsmith.com/go/seahash
