@@ -6,7 +6,6 @@ package seahash // import "blainsmith.com/go/seahash"
 
 import (
 	"encoding/binary"
-	"hash"
 )
 
 // Size of a SeaHash checksum in bytes.
@@ -23,7 +22,7 @@ const (
 	seed4     = 0x14f994a4c5259381
 )
 
-type digest struct {
+type Hasher struct {
 	state state
 	// Cumulative # of bytes written.
 	inputSize int
@@ -35,81 +34,81 @@ type digest struct {
 }
 
 // New creates a new SeaHash hash.Hash64
-func New() hash.Hash64 {
-	d := &digest{}
-	d.Reset()
-	return d
+func New() *Hasher {
+	h := Hasher{}
+	h.Reset()
+	return &h
 }
 
-func (d *digest) Reset() {
-	d.state.a = seed1
-	d.state.b = seed2
-	d.state.c = seed3
-	d.state.d = seed4
-	d.inputSize = 0
-	d.bufSize = 0
+func (h *Hasher) Reset() {
+	h.state.a = seed1
+	h.state.b = seed2
+	h.state.c = seed3
+	h.state.d = seed4
+	h.inputSize = 0
+	h.bufSize = 0
 }
 
 // Size returns Size constant to satisfy hash.Hash interface
-func (d *digest) Size() int { return Size }
+func (h *Hasher) Size() int { return Size }
 
 // BlockSize returns BlockSize constant to satisfy hash.Hash interface
-func (d *digest) BlockSize() int { return BlockSize }
+func (h *Hasher) BlockSize() int { return BlockSize }
 
-func (d *digest) Write(b []byte) (nn int, err error) {
+func (h *Hasher) Write(b []byte) (nn int, err error) {
 	nn = len(b)
-	d.inputSize += len(b)
-	if d.bufSize > 0 {
-		n := len(d.buf) - d.bufSize
-		copy(d.buf[d.bufSize:], b)
+	h.inputSize += len(b)
+	if h.bufSize > 0 {
+		n := len(h.buf) - h.bufSize
+		copy(h.buf[h.bufSize:], b)
 		if n > len(b) {
-			d.bufSize += len(b)
+			h.bufSize += len(b)
 			return
 		}
-		d.state.update(readInt(d.buf[:]))
-		d.bufSize = 0
+		h.state.update(readInt(h.buf[:]))
+		h.bufSize = 0
 		b = b[n:]
 	}
 	for len(b) >= chunkSize {
-		d.state.update(readInt(b[:chunkSize]))
+		h.state.update(readInt(b[:chunkSize]))
 		b = b[chunkSize:]
 	}
 	if len(b) > 0 {
-		d.bufSize = len(b)
-		copy(d.buf[:], b)
+		h.bufSize = len(b)
+		copy(h.buf[:], b)
 	}
 	return
 }
 
-func (d *digest) Sum(b []byte) []byte {
+func (d *Hasher) Sum(b []byte) []byte {
 	d.Write(b)
 	r := make([]byte, Size)
 	binary.LittleEndian.PutUint64(r, d.Sum64())
 	return r
 }
 
-func (d *digest) Sum64() uint64 {
-	if d.bufSize > 0 {
-		s := d.state
-		s.update(readInt(d.buf[:d.bufSize]))
-		return diffuse(s.a ^ s.b ^ s.c ^ s.d ^ uint64(d.inputSize))
+func (h *Hasher) Sum64() uint64 {
+	if h.bufSize > 0 {
+		s := h.state
+		s.update(readInt(h.buf[:h.bufSize]))
+		return diffuse(s.a ^ s.b ^ s.c ^ s.d ^ uint64(h.inputSize))
 	}
-	return diffuse(d.state.a ^ d.state.b ^ d.state.c ^ d.state.d ^ uint64(d.inputSize))
+	return diffuse(h.state.a ^ h.state.b ^ h.state.c ^ h.state.d ^ uint64(h.inputSize))
 }
 
 // Sum is a convenience method that returns the checksum of the byte slice
 func Sum(b []byte) []byte {
-	var d digest
-	d.Reset()
-	return d.Sum(b)
+	var h Hasher
+	h.Reset()
+	return h.Sum(b)
 }
 
 // Sum64 is a convenience method that returns uint64 checksum of the byte slice
 func Sum64(b []byte) uint64 {
-	var d digest
-	d.Reset()
-	d.Write(b)
-	return d.Sum64()
+	var h Hasher
+	h.Reset()
+	h.Write(b)
+	return h.Sum64()
 }
 
 type state struct {

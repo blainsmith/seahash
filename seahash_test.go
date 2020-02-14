@@ -61,13 +61,6 @@ func BenchmarkSum(b *testing.B) {
 	}
 }
 
-func BenchmarkSum64(b *testing.B) {
-	data := []byte("to be or not to be")
-	for i := 0; i < b.N; i++ {
-		Sum64(data)
-	}
-}
-
 func TestSizes(t *testing.T) {
 	h := New()
 
