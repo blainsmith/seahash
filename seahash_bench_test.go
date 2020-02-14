@@ -4,7 +4,7 @@ import (
 	"hash/fnv"
 	"testing"
 
-	creachadairCity "bitbucket.org/creachadair/cityhash"
+	creachadairCity "github.com/creachadair/cityhash"
 	dgryskiSpooky "github.com/dgryski/go-spooky"
 	dgryskiStadtx "github.com/dgryski/go-stadtx"
 	huichenMurmur "github.com/huichen/murmur"
